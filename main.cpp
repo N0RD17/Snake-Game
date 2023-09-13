@@ -18,28 +18,32 @@ const int SCREEN_HEIGHT{ 600 };
 const int SCREEN_FPS = 8;
 const int SCREEN_TICK_PER_FRAME{ 1000 / SCREEN_FPS};
 
+// Keeps Snake in Window
 void screenBound(SDL_Rect *head);
 
 int main()
 {
+   // Random number generation
    std::random_device rd;
-
    std::uniform_int_distribution<int> d(1, SCREEN_WIDTH);
 
+   // Initializes SDL2 Video Sub-System
    if(SDL_Init((SDL_INIT_VIDEO) < 0)) {
       std::printf("SDL could not initialize %s\n",
                   SDL_GetError());
       return 1;
    }
 
+   // Make window and renderer variables and create them
    SDL_Window *window = nullptr;
    SDL_Renderer *renderer = nullptr;
-
    SDL_CreateWindowAndRenderer(SCREEN_WIDTH, SCREEN_HEIGHT, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC, &window, &renderer);
 
+   // Give the window a title
    SDL_SetWindowTitle(window, "Snake Game");
    
 
+   // Scoped-Enum for movement
    enum class Direction{
       UP,
       DOWN,
@@ -48,13 +52,15 @@ int main()
    };
 
    SDL_Event event;
-
    bool isRunning = true;
-   
+
+   // By default direction is UP
    Direction direction = Direction::UP;
 
+   // Dynamic Array for Apples
    std::vector<SDL_Rect> apples;
 
+   // Generates Apple Location based on random number generator
    for(int i = 0; i < 100; i++)
    {
       SDL_Rect apple {d(rd), d(rd), 10, 10};
@@ -62,12 +68,15 @@ int main()
       apples.push_back(apple);
    }
 
+   // Creates Snake Head
    SDL_Rect head {400, 300, 10, 10};
+   // Body of Snake
    std::deque<SDL_Rect> body;
+   // Size of Snake
    std::size_t size = 1;
 
+   // LTimer objects responsible for handling and capping FPS
    LTimer fpsTimer;
-
    LTimer capTimer;
 
    int countedFrames{ 0 };
@@ -154,13 +163,11 @@ int main()
 
 
       // Draw
-
       for(std::size_t i{ 0 }; i < apples.size(); i++)
       {
          SDL_SetRenderDrawColor(renderer, 0xFF, 0x00, 0x00, 0xFF);
          SDL_RenderFillRect(renderer, &apples.at(i));
       }
-
 
       /** Old apple Collision
       for(std::size_t i{ 0 }; i < apples.size(); i++)
@@ -184,8 +191,6 @@ int main()
 
       screenBound(&head);
 
-//      ateApple(&head,body);
-
       // Snake head collision with body
       std::for_each(body.begin(), body.end(), [&](auto& snake_bod){
          if(SDL_HasIntersection(&snake_bod, &head))
@@ -197,6 +202,7 @@ int main()
       // Add new head to Snake
       body.push_front(head);
 
+      // If the snake body is bigger than the size, pop the back of the deque body
       while(body.size() > size)
       {
          body.pop_back();
@@ -212,6 +218,7 @@ int main()
       SDL_RenderFillRect(renderer, &head);
       **/
 
+      // Handles coloring each part of body
       std::for_each(body.begin(), body.end(), [&](auto& snake_bod){
          SDL_RenderFillRect(renderer, &snake_bod);
       });
@@ -227,19 +234,24 @@ int main()
       }
    }
 
+   // Frees memory
    SDL_DestroyWindow(window);
    SDL_DestroyRenderer(renderer);
-   window = NULL;
-   renderer = NULL;
-   
+   // For safety measures
+   window = nullptr;
+   renderer = nullptr;
+
+   // Exit SDL
    SDL_Quit();
 
 
+   // Notification that user has indeed exit the application
    std::cout << "\n========APPLICATION CLOSED========\n" << std::endl;
    
    return 0;
 }
 
+// Keeps the Snake on screen
 void screenBound(SDL_Rect *head)
 {
    if(head->x > SCREEN_WIDTH)
